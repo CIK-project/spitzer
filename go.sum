@@ -10,6 +10,8 @@ github.com/coreos/go-etcd v2.0.0+incompatible/go.mod h1:Jez6KQU2B/sWsbdaef3ED8Nz
 github.com/coreos/go-semver v0.2.0/go.mod h1:nnelYz7RCh+5ahJtPPxZlU+153eP4D4r3EedlOD2RNk=
 github.com/cosmos/cosmos-sdk v0.29.0 h1:0tClCHjWsFLxRPoThH5gwzqjvVfBpP708CCLjP3Hz58=
 github.com/cosmos/cosmos-sdk v0.29.0/go.mod h1:JrX/JpJunJQXBI5PEX2zELHMFzQr/159jDjIhesOh2c=
+github.com/cosmos/cosmos-sdk v0.29.1 h1:mDwHqY7z8usKMbdTVXpAwSeZYOifzD9RM60wU1/qvfA=
+github.com/cosmos/cosmos-sdk v0.29.1/go.mod h1:JrX/JpJunJQXBI5PEX2zELHMFzQr/159jDjIhesOh2c=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=

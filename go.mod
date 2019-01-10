@@ -2,7 +2,7 @@ module github.com/CIK-project/spitzer
 
 require (
 	github.com/btcsuite/btcutil v0.0.0-20180706230648-ab6388e0c60a // indirect
-	github.com/cosmos/cosmos-sdk v0.29.0
+	github.com/cosmos/cosmos-sdk v0.29.1
 	github.com/go-kit/kit v0.8.0 // indirect
 	github.com/go-logfmt/logfmt v0.4.0 // indirect
 	github.com/gogo/protobuf v1.2.0 // indirect
