@@ -9,6 +9,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/CIK-project/spitzer/types"
+	"github.com/CIK-project/spitzer/hub/model"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/cmd/gaia/app"
@@ -93,39 +94,8 @@ func (hub *HubSubscriber) Commit(blockResult *types.BlockResult) error {
 	}()
 
 	block := blockResult.Block
-	r, err := dbTx.Exec(`
-	INSERT INTO block(
-		height,
-		hash,
-		prevHash,
-		numTxs,
-		totalTxs,
-		lastCommitHash,
-		dataHash,
-		validatorHash,
-		nextValidatorHash,
-		consensusHash,
-		appHash,
-		lastResultHash,
-		evidenceHash,
-		proposer
-	)
-	VALUES
-		($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-	`, block.Height,
-	block.Hash().String(),
-	block.LastBlockID.Hash.String(),
-	block.NumTxs,
-	block.TotalTxs,
-	block.LastCommitHash.String(),
-	block.DataHash.String(),
-	block.ValidatorsHash.String(),
-	block.NextValidatorsHash.String(),
-	block.ConsensusHash.String(),
-	block.AppHash.String(),
-	block.LastResultsHash.String(),
-	block.EvidenceHash.String(),
-	block.ProposerAddress.String())
+	header := types.NewHeaderFrom(blockResult)
+	r, err := model.SetHeader(dbTx, header)
 	if err != nil {
 		hub.logger.Error(fmt.Sprintf("Error on insert block: %s", err.Error()))
 		return dbTx.Rollback()
