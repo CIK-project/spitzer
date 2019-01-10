@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"database/sql"
 	"github.com/CIK-project/spitzer/types"
 )
@@ -47,6 +48,67 @@ func GetHeader(db *sql.DB, height int64) (*types.Header, error) {
 	}
 
 	return &header, err
+}
+
+func GetHeaders(db *sql.DB, page int, limit int) ([]types.Header, error) {
+	if page <= 0 {
+		return nil, errors.New("Invalid page")
+	}
+	if limit <= 0 {
+		return nil, errors.New("Invalid limit")
+	}
+
+	rows, err := db.Query(`
+	SELECT
+		height,
+		hash,
+		prevHash,
+		numTxs,
+		totalTxs,
+		lastCommitHash,
+		dataHash,
+		validatorHash,
+		nextValidatorHash,
+		consensusHash,
+		appHash,
+		lastResultHash,
+		evidenceHash,
+		proposer
+	FROM block
+	ORDER BY height DESC
+	LIMIT $1 OFFSET $2
+	`, limit, (page - 1) * limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	headers := make([]types.Header, 0, 10)
+	
+	for rows.Next() {
+		header := types.Header{}
+		err := rows.Scan(
+			&header.Height,
+			&header.Hash,
+			&header.PrevHash,
+			&header.NumTxs,
+			&header.TotalTxs,
+			&header.LastCommitHash,
+			&header.DataHash,
+			&header.ValidatorHash,
+			&header.NextValidatorHash,
+			&header.ConsensusHash,
+			&header.AppHash,
+			&header.LastResultHash,
+			&header.EvidenceHash,
+			&header.Proposer,
+		)
+		if err != nil {
+			return nil, err
+		}
+		headers = append(headers, header)
+	}
+	return headers, nil
 }
 
 func SetHeader(tx *sql.Tx, header *types.Header) (sql.Result, error) {

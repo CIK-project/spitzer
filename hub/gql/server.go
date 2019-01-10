@@ -51,6 +51,34 @@ func (s *Server) Start() error {
 					return header, nil
 				},
 			},
+			"headers": &graphql.Field{
+				Type: graphql.NewList(gqltypes.HeaderObject),
+				Args: graphql.FieldConfigArgument{
+					"page": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.Int),
+					},
+					"limit": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.Int),
+					},
+				},
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					page, ok := p.Args["page"].(int)
+					if !ok {
+						return nil, errors.New("Invalid page type")
+					}
+					limit, ok := p.Args["limit"].(int)
+					if !ok {
+						return nil, errors.New("Invalid limit type")
+					}
+					
+					headers, err := model.GetHeaders(s.DB, page, limit)
+					if err != nil {
+						s.logger.Error(fmt.Sprintf("Error on get headers: %s", err.Error()))
+						return nil, errors.New("Can't get headers")
+					}
+					return headers, nil
+				},
+			},
 		},
 	})
 
