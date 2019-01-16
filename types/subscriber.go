@@ -1,8 +1,13 @@
 package types
 
+import (
+	tmtypes "github.com/tendermint/tendermint/types"
+)
+
 type Subscriber interface {
 	NextHeight() int64
-	Commit(*BlockResult) error
+	Genesis(*tmtypes.GenesisDoc) error
+	Commit(blockResult *BlockResult, catchUp bool) error
 	Stop() error
 }
 
@@ -22,7 +27,11 @@ func (test *TestSubscriber) NextHeight() int64 {
 	return test.Height + 1
 }
 
-func (test *TestSubscriber) Commit(*BlockResult) error {
+func (test *TestSubscriber) Genesis(*tmtypes.GenesisDoc) error {
+	return nil
+}
+
+func (test *TestSubscriber) Commit(*BlockResult, bool) error {
 	test.Height++
 	return nil
 }

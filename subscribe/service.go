@@ -88,6 +88,20 @@ func (ss *SubService) pullRoutine() {
 	}
 
 	height := ss.subscriber.NextHeight()
+	if height == 1 {
+		genesis, err := ss.client.Genesis()
+		if err != nil {
+			ss.Logger.Error(fmt.Sprintf("Error on genesis rpc: %s", err.Error()), "height", 0)
+			return
+		}
+
+		err = ss.subscriber.Genesis(genesis.Genesis)
+		if err != nil {
+			ss.Logger.Error(fmt.Sprintf("Error on genesis: %s", err.Error()), "height", 0)
+			return
+		}
+	}
+
 	block, err := ss.client.Block(&height)
 	if err != nil {
 		ss.Logger.Error(fmt.Sprintf("Error on pulling: %s", err.Error()), "height", ss.subscriber.NextHeight())
@@ -108,7 +122,7 @@ func (ss *SubService) pullRoutine() {
 	}
 
 	ss.Logger.Info("Commit block from pulling", "height", block.Block.Height)
-	err = ss.subscriber.Commit(blockResult)
+	err = ss.subscriber.Commit(blockResult, false)
 	if err != nil {
 		ss.Logger.Error(fmt.Sprintf("Fail to commit block: %s", err.Error()))
 	}
@@ -132,6 +146,20 @@ func (ss *SubService) wsRoutine(i interface{}) {
 			return
 		}
 
+		if block.Block.Height == 1 {
+			genesis, err := ss.client.Genesis()
+			if err != nil {
+				ss.Logger.Error(fmt.Sprintf("Error on genesis rpc: %s", err.Error()), "height", 0)
+				return
+			}
+	
+			err = ss.subscriber.Genesis(genesis.Genesis)
+			if err != nil {
+				ss.Logger.Error(fmt.Sprintf("Error on genesis: %s", err.Error()), "height", 0)
+				return
+			}
+		}
+
 		result, err := ss.client.BlockResults(&block.Block.Height)
 		if err != nil {
 			ss.Logger.Error(err.Error())
@@ -142,7 +170,7 @@ func (ss *SubService) wsRoutine(i interface{}) {
 			}
 
 			ss.Logger.Info("Commit block from ws", "height", block.Block.Height)
-			err = ss.subscriber.Commit(blockResult)
+			err = ss.subscriber.Commit(blockResult, true)
 			if err != nil {
 				ss.Logger.Error(fmt.Sprintf("Fail to commit block: %s", err.Error()))
 			}

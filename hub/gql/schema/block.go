@@ -1,7 +1,14 @@
-package types
+package schema
 
 import (
+	"fmt"
+	"errors"
+	"database/sql"
+
 	"github.com/graphql-go/graphql"
+	"github.com/CIK-project/spitzer/types"
+
+	"github.com/CIK-project/spitzer/hub/model"
 )
 
 var HeaderObject = graphql.NewObject(graphql.ObjectConfig{
@@ -15,6 +22,9 @@ var HeaderObject = graphql.NewObject(graphql.ObjectConfig{
 		},
 		"prevHash": &graphql.Field{
 			Type: graphql.String,
+		},
+		"time": &graphql.Field{
+			Type: graphql.DateTime,
 		},
 		"numTxs": &graphql.Field{
 			Type: graphql.Int,
@@ -47,6 +57,25 @@ var HeaderObject = graphql.NewObject(graphql.ObjectConfig{
 			Type: graphql.String,
 		},
 		"proposer": &graphql.Field{
+			Type: ValidatorObject,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				db, ok := p.Context.Value(ContextKeyDB).(*sql.DB)
+				if !ok {
+					return nil, errors.New("Invalid context")
+				}
+				header, ok := p.Source.(*types.Header)
+				if !ok {
+					return nil, errors.New("Invalid header type")
+				}
+				val, err := model.GetValidatorByCons(db, header.Proposer)
+				if err != nil {
+					return nil, errors.New(fmt.Sprintf("Can't get validator: %s, consAddress: %s", err.Error(), header.Proposer))
+				}
+
+				return val, nil
+			},
+		},
+		"tags": &graphql.Field{
 			Type: graphql.String,
 		},
 	},

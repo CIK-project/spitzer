@@ -2,7 +2,7 @@ package hub
 
 import (
 	"fmt"
-	"encoding/hex"
+	"encoding/json"
 
 	"database/sql"
 	_ "github.com/lib/pq"
@@ -14,7 +14,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/cmd/gaia/app"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/stake"
 	"github.com/cosmos/cosmos-sdk/codec"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 // 코스모스-허브(가이아)용 섭스크라이버
@@ -60,27 +62,42 @@ func NewHubSubscriber(logger log.Logger, config types.DBConfig) *HubSubscriber {
 }
 
 func (hub *HubSubscriber) NextHeight() int64 {
-	db := hub.db
-	row := db.QueryRow(`
-	SELECT
-		height
-	FROM
-		block
-	ORDER BY
-		height DESC
-	LIMIT 1		
-	`)
-	var lastHeight int64
-	err := row.Scan(&lastHeight)
+	recentHeight, err := model.RecentHeight(hub.db)
 	if err != nil {
-		hub.logger.Error(fmt.Sprintf("Error on query last height: %s", err.Error()))
-		lastHeight = 0
+		hub.logger.Error(fmt.Sprintf("Error on query recent height: %s", err.Error()))
+		recentHeight = 0
 	}
 
-	return lastHeight + 1
+	return recentHeight + 1
 }
 
-func (hub *HubSubscriber) Commit(blockResult *types.BlockResult) error {
+func (hub *HubSubscriber) Genesis(genesis *tmtypes.GenesisDoc) error {
+	genState := app.GenesisState{}
+	json.Unmarshal(genesis.AppState, &genState)
+	dbTx, err := hub.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	for _, validator := range genState.StakeData.Validators {
+		val := types.NewValidator(validator.OperatorAddr, validator.GetConsPubKey(), validator.GetPower().RoundInt64())
+		r, err := model.SetValidator(dbTx, val)
+		if err != nil {
+			return err
+		}
+		hub.logger.Info("Insert validator", "height", 0, "validator", val.Address, "result", r)
+		
+		desc := validator.Description
+		r, err = model.SetValidatorDescription(dbTx, val.Address, desc.Moniker, desc.Identity, desc.Website, desc.Details)
+		if err != nil {
+			return err
+		}
+		hub.logger.Info("Insert validator description", "height", 0, "validator", val.Address, "moniker", validator.GetMoniker(), "result", r)
+	}
+	return dbTx.Commit()
+}
+
+func (hub *HubSubscriber) Commit(blockResult *types.BlockResult, catchUp bool) error {
 	dbTx, err := hub.db.Begin()
 	if err != nil {
 		return err
@@ -97,102 +114,126 @@ func (hub *HubSubscriber) Commit(blockResult *types.BlockResult) error {
 	header := types.NewHeaderFrom(blockResult)
 	r, err := model.SetHeader(dbTx, header)
 	if err != nil {
-		hub.logger.Error(fmt.Sprintf("Error on insert block: %s", err.Error()))
-		return dbTx.Rollback()
+		return err
 	}
 	hub.logger.Info("Insert block", "height", block.Height, "result", r)
 
 	numTxs := block.NumTxs
 	var i int64
 	for i = 0; i < numTxs; i++ {
-		tx, err := blockResult.GetTx(i)
+		txResult, err := blockResult.GetTx(i)
 		if err != nil {
-			// TODO: error handling
+			// TODO: error handling, but never happen?
 			hub.logger.Error(fmt.Sprintf("Error get tx: %s", err.Error()))
 			continue
 		} else {
-			var stdTx auth.StdTx
-			appTx, sdkErr := hub.txDecoder(tx.Tx)
-			// if err occured, just use default stdTx
-			if sdkErr != nil {
-				hub.logger.Error(fmt.Sprintf("Error on tx decoding: %s", sdkErr.Error()))
-			} else {
-				_stdTx, ok := appTx.(auth.StdTx)
-				if ok == false {
-					hub.logger.Error("Unkwon tx type")
-				} else {
-					stdTx = _stdTx
-				}
-			}
-			stdTxJson, err := hub.cdc.MarshalJSON(stdTx)
+			tx, err := types.NewTxFrom(&txResult, block.Height, i, hub.txDecoder, hub.cdc)
 			if err != nil {
-				hub.logger.Error(fmt.Sprintf("Error on tx encoding json: %s", err.Error()))
-				continue
+				return err
 			}
-
-			r, err := dbTx.Exec(`
-			INSERT INTO transaction(
-				height,
-				index,
-				hash,
-				code,
-				stdTx
-			)
-			VALUES
-				($1, $2, $3, $4, $5)
-			`, block.Height,
-			i,
-			hex.EncodeToString(tx.Tx.Hash()),
-			int32(tx.Result.Code),
-			stdTxJson)
+			r, err := model.SetTx(dbTx, tx)
 			if err != nil {
-				hub.logger.Error(fmt.Sprintf("Error on insert transaction: %s", err.Error()))
-				return dbTx.Rollback()
+				return err
 			}
 			hub.logger.Info("Insert transaction", "height", block.Height, "index", i, "result", r)
+
+			if txResult.Result.Code == 0 {
+				tags := txResult.Result.GetTags()
+				for _, tag := range tags {
+					if string(tag.Key) == "action" && (string(tag.Value) == "create_validator" || string(tag.Value) == "edit_validator") {
+						appTx, sdkErr := hub.txDecoder(txResult.Tx)
+						if sdkErr == nil {
+							stdTx, ok := appTx.(auth.StdTx)
+							if ok {
+								for _, msg := range stdTx.GetMsgs() {
+									if msg, ok := msg.(stake.MsgCreateValidator); ok {
+										val := types.NewValidator(msg.ValidatorAddr, msg.PubKey, 0)
+										// first set validator
+										_, err := model.SetValidator(dbTx, val)
+										if err != nil {
+											return err
+										}
+										desc := msg.Description
+										r, err := model.SetValidatorDescription(dbTx, val.Address, desc.Moniker, desc.Identity, desc.Website, desc.Details)
+										if err != nil {
+											return err
+										}
+										hub.logger.Info("Set validator's description", "height", block.Height, "validator", val.Address, "moniker", desc.Moniker, "result", r)
+									}
+
+									if msg, ok := msg.(stake.MsgEditValidator); ok {
+										val := &types.Validator {
+											Address: msg.ValidatorAddr.String(),
+										}
+
+										desc := msg.Description
+										r, err := model.SetValidatorDescription(dbTx, val.Address, desc.Moniker, desc.Identity, desc.Website, desc.Details)
+										if err != nil {
+											return err
+										}
+										hub.logger.Info("Set validator's description", "height", block.Height, "validator", val.Address, "moniker", desc.Moniker, "result", r)
+									}
+
+									// TODO: handle commision rate
+								}
+							}
+						}
+					}
+				}
+			}	
 		}
 	}
+
+	endblock := blockResult.Results.EndBlock
+	hub.logger.Info("Information of end block", "height", block.Height, "num valupdate", len(endblock.ValidatorUpdates))
+	for _, valupdate := range endblock.ValidatorUpdates {
+		pubkey, err := tmtypes.PB2TM.PubKey(valupdate.PubKey)
+		if err != nil {
+			return err
+		}
+		val := types.NewValidator(sdk.ValAddress{}, pubkey, valupdate.Power)
+		r, err = model.SetValidatorPower(dbTx, val)
+		if err != nil {
+			return err
+		}
+		hub.logger.Info("Validator update", "height", block.Height, "validator_pub", val.PubKey, "power", val.Power, "result", r)
+	}
+
+	// calculate uptime only when catch up
+	if catchUp {
+		r, err = model.DecrementValsUptime(dbTx)
+		if err != nil {
+			return err
+		}
+		hub.logger.Info("Decrement all vals uptime", "height", block.Height, "result", r)
+
+		numOfSigners := 0
+		for _, precommit := range block.LastCommit.Precommits {
+			if precommit != nil {
+				val := types.Validator {
+					ConsAddress: sdk.ConsAddress(precommit.ValidatorAddress).String(),
+				}
+
+				r, err = model.IncrementValUptime(dbTx, &val)
+				if err != nil {
+					return err
+				}
+				numOfSigners++
+			}	
+		}
+		hub.logger.Info("Increment val's uptime", "height", block.Height, "num of signing vals", numOfSigners)
+
+		_, err = model.LimitValsUptimeLen(dbTx)
+		if err != nil {
+			return err
+		}
+	}	
 
 	return dbTx.Commit()
 }
 
 func (hub *HubSubscriber) initTables() error {
-	db := hub.db
-	r, err := db.Exec(`
-	CREATE TABLE IF NOT EXISTS block
-	(
-		height BIGSERIAL PRIMARY KEY,
-		hash CHAR (64) NOT NULL UNIQUE,
-		prevHash CHAR (64) UNIQUE,
-		numTxs BIGINT,
-		totalTxs BIGINT,
-		lastCommitHash CHAR (64),
-		dataHash CHAR (64),
-		validatorHash CHAR (64),
-		nextValidatorHash CHAR (64),
-		consensusHash CHAR (64),
-		appHash CHAR (64),
-		lastResultHash CHAR (64),
-		evidenceHash CHAR (64),
-		proposer CHAR (40)
-	)`)
-	if err != nil {
-		return err
-	}
-	hub.logger.Info("Create table", "result", r)
-
-	db.Exec(`
-	CREATE TABLE IF NOT EXISTS transaction
-	(
-		id SERIAL PRIMARY KEY,
-		height BIGINT,
-		index INT,
-		hash CHAR (64),
-		code INTEGER,
-		stdTx json
-	)`)
-
-	return nil
+	return model.CreateTable(hub.db)
 }
 
 func (hub *HubSubscriber) Stop() error {
