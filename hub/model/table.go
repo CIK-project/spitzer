@@ -158,7 +158,7 @@ func CreateTable(db *sql.DB) error {
 	_, err = db.Exec(`
 	CREATE TABLE IF NOT EXISTS transaction
 	(
-		id SERIAL PRIMARY KEY,
+		id SERIAL UNIQUE,
 		height BIGINT,
 		index INT,
 		hash CHAR (64),
@@ -169,14 +169,9 @@ func CreateTable(db *sql.DB) error {
 		fee JSONB,
 		gasWanted BIGINT,
 		gasUsed BIGINT,
-		msgs JSONB
+		msgs JSONB,
+		PRIMARY KEY (height, index)
 	)`)
-	if err != nil {
-		return err
-	}
-	_, err = db.Exec(`
-	CREATE INDEX IF NOT EXISTS idx_tx_height_index
-	ON transaction(height, index)`)
 	if err != nil {
 		return err
 	}
