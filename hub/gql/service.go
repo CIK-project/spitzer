@@ -16,7 +16,7 @@ type GqlService struct {
 	server *Server
 }
 
-func NewGqlService(logger log.Logger, config types.DBConfig) *GqlService {
+func NewGqlService(logger log.Logger, config types.DBConfig, endpoint, cors string) *GqlService {
 	gs := &GqlService{}
 
 	dbInfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
@@ -26,7 +26,7 @@ func NewGqlService(logger log.Logger, config types.DBConfig) *GqlService {
 		logger.Error(fmt.Sprintf("Error on open db: %s", err.Error()))
 		panic(err)
 	}
-	gs.server = NewServer(logger, db)
+	gs.server = NewServer(logger, db, endpoint, cors)
 
 	gs.BaseService = *cmn.NewBaseService(logger, "Graphql service", gs)
 	return gs

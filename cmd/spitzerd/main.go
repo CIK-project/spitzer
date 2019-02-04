@@ -17,6 +17,9 @@ var (
 )
 
 func main() {
+	endpoint := ":8080"
+	cors := "*"
+
 	rootCmd := &cobra.Command {
 		Use: "spitzerd",
 		Short: "Start spitzer's graphql endpoint deamon",
@@ -27,7 +30,7 @@ func main() {
 				return err
 			}
 
-			run(config)
+			run(config, endpoint, cors)
 			return nil
 		},
 	}
@@ -35,15 +38,17 @@ func main() {
 	rootCmd.Flags().StringVar(&config.User, "db.user", "", "")
 	rootCmd.Flags().StringVar(&config.Password, "db.password", "", "")
 	rootCmd.Flags().StringVar(&config.DBName, "db.name", "", "")
-	
+	rootCmd.Flags().StringVar(&endpoint, "endpoint","", endpoint)
+	rootCmd.Flags().StringVar(&cors, "cors", "", cors)
+
 	if err := rootCmd.Execute(); err != nil {
 		logger.Error(fmt.Sprintf("Failed to parse cli: %s", err.Error()))
 		os.Exit(1)
 	}
 }
 
-func run(config types.DBConfig) {
-	qls := gql.NewGqlService(logger, config)
+func run(config types.DBConfig, endpoint, cors string) {
+	qls := gql.NewGqlService(logger, config, endpoint, cors)
 
 	// Stop upon receiving SIGTERM or CTRL-C
 	exit := make(chan os.Signal, 1)
