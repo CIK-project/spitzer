@@ -14,7 +14,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/cmd/gaia/app"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/stake"
+	stake "github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/codec"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
@@ -79,8 +79,8 @@ func (hub *HubSubscriber) Genesis(genesis *tmtypes.GenesisDoc) error {
 		return err
 	}
 
-	for _, validator := range genState.StakeData.Validators {
-		val := types.NewValidator(validator.OperatorAddr, validator.GetConsPubKey(), validator.GetPower().RoundInt64())
+	for _, validator := range genState.StakingData.Validators {
+		val := types.NewValidator(validator.OperatorAddr, validator.GetConsPubKey(), validator.GetPower().Int64())
 		r, err := model.SetValidator(dbTx, val)
 		if err != nil {
 			return err

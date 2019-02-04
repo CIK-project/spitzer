@@ -2,7 +2,7 @@ module github.com/CIK-project/spitzer
 
 require (
 	github.com/btcsuite/btcutil v0.0.0-20180706230648-ab6388e0c60a // indirect
-	github.com/cosmos/cosmos-sdk v0.29.1
+	github.com/cosmos/cosmos-sdk v0.30.0
 	github.com/go-kit/kit v0.8.0 // indirect
 	github.com/go-logfmt/logfmt v0.4.0 // indirect
 	github.com/gogo/protobuf v1.2.0 // indirect
@@ -21,7 +21,7 @@ require (
 	github.com/tendermint/btcd v0.0.0-20180816174608-e5840949ff4f // indirect
 	github.com/tendermint/go-amino v0.14.1 // indirect
 	github.com/tendermint/iavl v0.12.0 // indirect
-	github.com/tendermint/tendermint v0.27.3
+	github.com/tendermint/tendermint v0.29.0
 	golang.org/x/net v0.0.0-20181220203305-927f97764cc3 // indirect
 	google.golang.org/grpc v1.17.0 // indirect
 )

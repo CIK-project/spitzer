@@ -12,6 +12,8 @@ github.com/cosmos/cosmos-sdk v0.29.0 h1:0tClCHjWsFLxRPoThH5gwzqjvVfBpP708CCLjP3H
 github.com/cosmos/cosmos-sdk v0.29.0/go.mod h1:JrX/JpJunJQXBI5PEX2zELHMFzQr/159jDjIhesOh2c=
 github.com/cosmos/cosmos-sdk v0.29.1 h1:mDwHqY7z8usKMbdTVXpAwSeZYOifzD9RM60wU1/qvfA=
 github.com/cosmos/cosmos-sdk v0.29.1/go.mod h1:JrX/JpJunJQXBI5PEX2zELHMFzQr/159jDjIhesOh2c=
+github.com/cosmos/cosmos-sdk v0.30.0 h1:DUpcAqHalX2IEvum2wjPIos6sRcOYVd1wNSfiQ+wdfo=
+github.com/cosmos/cosmos-sdk v0.30.0/go.mod h1:JrX/JpJunJQXBI5PEX2zELHMFzQr/159jDjIhesOh2c=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
@@ -89,6 +91,8 @@ github.com/tendermint/iavl v0.12.0/go.mod h1:EoKMMv++tDOL5qKKVnoIqtVPshRrEPeJ0Ws
 github.com/tendermint/tendermint v0.27.3 h1:yJQhTEjFiNtTqO2OQTPnIYmy1Gj3EBqBik3c5wCY7nU=
 github.com/tendermint/tendermint v0.27.3/go.mod h1:ymcPyWblXCplCPQjbOYbrF1fWnpslATMVqiGgWbZrlc=
 github.com/tendermint/tendermint v0.27.4 h1:rytK6+o/TYPhLJJu/tRaq6PBx/25VGAwiee2qdNnFsY=
+github.com/tendermint/tendermint v0.29.0 h1:zaJwtaAQVUC4QxqImtpPlCpMGroVvPU0g75ZTlvmFg8=
+github.com/tendermint/tendermint v0.29.0/go.mod h1:ymcPyWblXCplCPQjbOYbrF1fWnpslATMVqiGgWbZrlc=
 github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8/go.mod h1:VFNgLljTbGfSG7qAOspJ7OScBnGdDN/yBr0sguwnwf0=
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=
 golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9 h1:mKdxBk7AujPs8kU4m80U72y/zjbZ3UcXC7dClwKbUI0=
