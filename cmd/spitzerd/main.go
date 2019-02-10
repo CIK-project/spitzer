@@ -14,12 +14,11 @@ import (
 var (
 	logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 	config = types.DBConfig{}
+	endpoint = "0.0.0.0:8080"
+	cors = "*"
 )
 
 func main() {
-	endpoint := ":8080"
-	cors := "*"
-
 	rootCmd := &cobra.Command {
 		Use: "spitzerd",
 		Short: "Start spitzer's graphql endpoint deamon",
@@ -39,8 +38,8 @@ func main() {
 	rootCmd.Flags().StringVar(&config.User, "db.user", "", "")
 	rootCmd.Flags().StringVar(&config.Password, "db.password", "", "")
 	rootCmd.Flags().StringVar(&config.DBName, "db.name", "", "")
-	rootCmd.Flags().StringVar(&endpoint, "endpoint","", endpoint)
-	rootCmd.Flags().StringVar(&cors, "cors", "", cors)
+	rootCmd.Flags().StringVar(&endpoint, "endpoint", endpoint, "")
+	rootCmd.Flags().StringVar(&cors, "cors", cors, "")
 
 	if err := rootCmd.Execute(); err != nil {
 		logger.Error(fmt.Sprintf("Failed to parse cli: %s", err.Error()))
