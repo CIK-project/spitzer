@@ -5,12 +5,16 @@ import (
 )
 
 type DBConfig struct {
+	Host string
 	User     string
 	Password string
 	DBName   string
 }
 
 func (config DBConfig) ValidateBasic() error {
+	if len(config.Host) == 0 {
+		return errors.New("DB Host not set")
+	}
 	if len(config.User) == 0 {
 		return errors.New("DB User not set")
 	}

@@ -30,8 +30,8 @@ type HubSubscriber struct {
 var _ types.Subscriber = &HubSubscriber{}
 
 func NewHubSubscriber(logger log.Logger, config types.DBConfig) *HubSubscriber {
-	dbInfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
-            config.User, config.Password, config.DBName)
+	dbInfo := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable",
+            config.Host, config.User, config.Password, config.DBName)
 	db, err := sql.Open("postgres", dbInfo)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Error on open db: %s", err.Error()))

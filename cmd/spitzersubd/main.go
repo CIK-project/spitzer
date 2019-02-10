@@ -15,6 +15,7 @@ import (
 var (
 	logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 	config = types.DBConfig{}
+	rpcEndpoint = "tcp://127.0.0.1:26657"
 )
 
 func main() {
@@ -28,14 +29,16 @@ func main() {
 				return err
 			}
 
-			run(config)
+			run(config, rpcEndpoint)
 			return nil
 		},
 	}
 
+	rootCmd.Flags().StringVar(&config.Host, "db.host", "", "")
 	rootCmd.Flags().StringVar(&config.User, "db.user", "", "")
 	rootCmd.Flags().StringVar(&config.Password, "db.password", "", "")
 	rootCmd.Flags().StringVar(&config.DBName, "db.name", "", "")
+	rootCmd.Flags().StringVar(&rpcEndpoint, "rpc", "", rpcEndpoint)
 	
 	if err := rootCmd.Execute(); err != nil {
 		logger.Error(fmt.Sprintf("Failed to parse cli: %s", err.Error()))
@@ -43,9 +46,9 @@ func main() {
 	}
 }
 
-func run(config types.DBConfig) {
+func run(config types.DBConfig, rpcEndpoint string) {
 	subscriber := hub.NewHubSubscriber(logger, config)
-	ss := subscribe.NewSubService(logger, subscriber, "tcp://127.0.0.1:26657", "/websocket")
+	ss := subscribe.NewSubService(logger, subscriber, rpcEndpoint, "/websocket")
 
 	// Stop upon receiving SIGTERM or CTRL-C
 	exit := make(chan os.Signal, 1)

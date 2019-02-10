@@ -35,6 +35,7 @@ func main() {
 		},
 	}
 
+	rootCmd.Flags().StringVar(&config.Host, "db.host", "", "")
 	rootCmd.Flags().StringVar(&config.User, "db.user", "", "")
 	rootCmd.Flags().StringVar(&config.Password, "db.password", "", "")
 	rootCmd.Flags().StringVar(&config.DBName, "db.name", "", "")

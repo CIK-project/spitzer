@@ -19,8 +19,8 @@ type GqlService struct {
 func NewGqlService(logger log.Logger, config types.DBConfig, endpoint, cors string) *GqlService {
 	gs := &GqlService{}
 
-	dbInfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",
-            config.User, config.Password, config.DBName)
+	dbInfo := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable",
+            config.Host, config.User, config.Password, config.DBName)
 	db, err := sql.Open("postgres", dbInfo)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Error on open db: %s", err.Error()))
