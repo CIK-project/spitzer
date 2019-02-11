@@ -80,7 +80,7 @@ func (hub *HubSubscriber) Genesis(genesis *tmtypes.GenesisDoc) error {
 	}
 
 	for _, validator := range genState.StakingData.Validators {
-		val := types.NewValidator(validator.OperatorAddr, validator.GetConsPubKey(), validator.GetPower().Int64())
+		val := types.NewValidator(validator.OperatorAddr, validator.GetConsPubKey(), validator.GetTendermintPower())
 		r, err := model.SetValidator(dbTx, val)
 		if err != nil {
 			return err
